@@ -1,0 +1,95 @@
+﻿Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: ERIC
+'Project Start Date: 6/16/2011
+'Project 6918 update, SFDC.NET 1.18.23
+Function.Intrinsic.Control.If(v.Caller.Hook,<>,50784)
+	Function.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.Control.CallSub(Bdfload)
+
+Program.Sub.Main.End
+
+Program.Sub.BDFLoad.Start
+V.Local.sJob.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.iRowCnt.Declare(Long)
+V.Local.i.Declare(Long)
+V.Local.sSeq.Declare(String)
+V.Local.sWriteRow.Declare(String)
+V.Local.sReadRow.Declare(String)
+V.Local.sRR.Declare(String)
+V.Local.iColor.Declare(Long)
+V.Local.sReady.Declare(String)
+V.Local.s9.Declare(String)
+v.Local.sBDFName.Declare
+v.Local.bExists.Declare
+v.Local.sJoin.declare
+V.Local.iColor.Set(65280)
+
+'4 different bdfs can be on the same hook, all depends on what they are seeing
+v.Local.sBDFName.Set("AllWorkcentersView-AllWorkOrderOperationsGridView-bdf")
+f.Intrinsic.Variable.PassedExists(v.Local.sBDFName,v.Local.bExists) 
+
+Function.Intrinsic.Control.If(v.Local.bExists,=,False) 
+	v.Local.sBDFName.Set("AllDepartmentsView-AllWorkOrderOperationsGridView-bdf")		
+Function.Intrinsic.Control.EndIf
+
+f.Intrinsic.Variable.PassedExists(v.Local.sBDFName,v.Local.bExists)
+
+Function.Intrinsic.Control.If(v.Local.bExists,=,False)
+	v.Local.sBDFName.Set("AllWorkGroupsView-AllWorkOrderOperationsGridView-bdf")			
+Function.Intrinsic.Control.EndIf
+
+f.Intrinsic.Variable.PassedExists(v.Local.sBDFName,v.Local.bExists)
+
+Function.Intrinsic.Control.If(v.Local.bExists,=,False)
+    v.Local.sBDFName.Set("AllPartsView-gridViewOperations-bdf")         
+Function.Intrinsic.Control.EndIf
+
+f.Intrinsic.Variable.PassedExists(v.Local.sBDFName,v.Local.bExists)
+
+Function.Intrinsic.Control.If(v.Local.bExists,=,False) 
+	f.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf	
+
+
+F.Intrinsic.BDF.Load(v.local.sBDFName,v.local.sBDFName)
+F.Intrinsic.BDF.Clone(v.local.sBDFName,"Clone")
+F.Intrinsic.BDF.ReadRowCount(v.local.sBDFName,V.Local.iRowCnt)
+F.Intrinsic.Math.Sub(V.Local.iRowCnt,1,V.Local.iRowCnt)
+F.Intrinsic.Control.For(V.Local.i,0,V.Local.iRowCnt,1)
+	F.Intrinsic.BDF.ReadRow(v.local.sBDFName,V.Local.i,V.Local.sReadRow)
+	F.Intrinsic.String.Split(V.Local.sReadRow,"|~|",V.Local.sRR)
+	F.Intrinsic.String.Split(V.Local.sRR(1),"-",V.Local.sJob)
+	V.Local.sSeq.Set(V.Local.sRR(2).Trim)
+	Function.Intrinsic.String.Build	("Select JOB From JOBS_IN_PROCESS_G Where JOB ='{0}' And Suffix = '{1}' And Seq = '{2}'",v.Local.sJob(0).trim,v.Local.sJob(1).Trim,v.Local.sSeq,v.Local.sSQL)
+	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)		
+		f.Intrinsic.String.Build("]=[BC::{0}|~|",v.Local.iColor,v.Local.sJoin)		
+		f.Intrinsic.String.Join(v.Local.sRR,v.Local.sJoin,v.Local.sWriteRow)		
+	F.Intrinsic.Control.Else
+		f.Intrinsic.String.Join(v.Local.sRR,"|~|",v.Local.sWriteRow)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rst.Close
+	f.Intrinsic.BDF.WriteRow("Clone",V.Local.sWriteRow.Trim)
+F.Intrinsic.Control.Next(V.Local.i)
+f.Intrinsic.BDF.Save("Clone",v.local.sBDFName)
+F.Intrinsic.Control.ExitSub
+
+
+
+Program.Sub.BDFLoad.End
+
+Program.Sub.Comments.Start
+${$5$}$2.0.0.0$}$2
+${$6$}$ttrojacek$}$20230118065643875$}$1REoGSe/f0Yb3cFf+NC/HUSyrHyqoDF3I0V4UnurFiqQiPRBRLo7uvRv3LbDiiGoWbKNR9+49CAezemAXiIyNQ==
+Program.Sub.Comments.End
